@@ -1,17 +1,22 @@
-import "./globals.css";
-
 export const metadata = {
   title: "MAVA Board",
-  description: "Dashboard vendeur MAVA",
+  description: "Dashboard de livraison MAVA",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "https://raw.githubusercontent.com/Romyse226/mon-dashboard-mava/31c25ca78b7d59f021c7a498e8b1ce7491f12237/mon%20logo%20mava.png",
+    apple: "https://raw.githubusercontent.com/Romyse226/mon-dashboard-mava/31c25ca78b7d59f021c7a498e8b1ce7491f12237/mon%20logo%20mava.png",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "MAVA Board",
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="fr">
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
-      </head>
-      <body>{children}</body>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }

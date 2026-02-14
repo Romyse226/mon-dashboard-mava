@@ -1,0 +1,17 @@
+{
+  "name": "MAVA Board",
+  "short_name": "MAVA",
+  "description": "Dashboard de livraison MAVA",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#700D02",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/Romyse226/mon-dashboard-mava/31c25ca78b7d59f021c7a498e8b1ce7491f12237/mon%20logo%20mava.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

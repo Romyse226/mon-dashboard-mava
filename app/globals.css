@@ -3,8 +3,7 @@
 @tailwind utilities;
 
 html {
-  /* Indispensable pour que le rafraîchissement natif fonctionne */
-  overscroll-behavior-y: auto;
+  overscroll-behavior-y: auto !important; /* Force le refresh natif */
   height: 100%;
 }
 
@@ -13,29 +12,16 @@ body {
   padding: 0;
   height: 100%;
   background-color: black;
-  /* Rendu ultra-fluide pour mobile */
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  /* Supprime le délai de clic sur mobile (très important pour la réactivité) */
   touch-action: manipulation;
   overflow-x: hidden;
-  /* Force la fluidité du scroll sur iPhone */
   -webkit-overflow-scrolling: touch;
 }
 
-/* Animation de pression pour que les boutons ne soient pas "statiques" */
 button:active, a:active {
   transform: scale(0.96);
-  transition: transform 0.1s ease;
 }
 
-/* Cache la scrollbar mais garde le défilement pour le look PWA propre */
 ::-webkit-scrollbar {
   display: none;
-}
-
-/* Empêche la sélection de texte accidentelle quand on clique vite sur les boutons */
-button {
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
 }

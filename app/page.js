@@ -23,9 +23,11 @@ function DashboardContent() {
   }, []);
 
   useEffect(() => {
-    // Demande immédiate pour le WEB (Point 2)
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
+    // FIX POINT 2 : Déclenchement notifs Web + PWA
+    if ("Notification" in window) {
+      if (Notification.permission === "default") {
+        setShowNotifModal(true);
+      }
     }
 
     const savedActive = localStorage.getItem('mava_active_session');
@@ -61,6 +63,15 @@ function DashboardContent() {
     fetchOrders(vendeurPhone);
   };
 
+  const requestPermission = () => {
+    Notification.requestPermission().then(permission => {
+      if (permission === "granted") {
+        setShowNotifModal(false);
+        new Notification("MAVA Board", { body: "Alertes activées !", icon: logoUrl });
+      }
+    });
+  };
+
   const colors = {
     bg: darkMode ? 'bg-black' : 'bg-[#F8F9FA]',
     card: darkMode ? 'bg-[#121212]' : 'bg-white',
@@ -72,6 +83,7 @@ function DashboardContent() {
   if (!vendeurPhone) {
     return (
       <div className={`min-h-screen ${colors.bg} flex flex-col items-center p-8`}>
+        <div className="w-full flex justify-end mb-4"><button onClick={() => setDarkMode(!darkMode)} className="p-3 bg-zinc-800 rounded-full">{darkMode ? '☀️' : '🌙'}</button></div>
         <img src={logoUrl} className="w-40 mb-8" alt="Logo" />
         <input type="tel" className={`w-full max-w-sm p-5 rounded-2xl border-2 mb-4 text-center font-bold ${darkMode ? 'bg-zinc-900 text-white border-zinc-700' : 'bg-white text-black border-zinc-300'}`} placeholder="07XXXXXXXX" value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} />
         <button onClick={handleLogin} className="w-full max-w-sm p-5 rounded-2xl font-black uppercase bg-[#700D02] text-white">Ouvrir mon Board</button>
@@ -81,12 +93,23 @@ function DashboardContent() {
 
   return (
     <div className={`min-h-screen ${colors.bg} ${colors.text} p-4`}>
+      {/* Modal pour forcer les notifs si pas activées */}
+      {showNotifModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md">
+          <div className="bg-white text-black p-8 rounded-[2.5rem] w-full max-w-sm text-center border-4 border-[#700D02]">
+            <h3 className="text-2xl font-black uppercase mb-2">Activer les alertes</h3>
+            <p className="text-sm opacity-70 mb-6 font-medium">Autorisez les notifications pour recevoir vos commandes instantanément.</p>
+            <button onClick={requestPermission} className="w-full bg-[#700D02] text-white py-5 rounded-2xl font-black uppercase active:scale-95 transition-transform">Autoriser</button>
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between items-center mb-8">
         <button onClick={() => setDarkMode(!darkMode)} className="p-3 bg-zinc-800 rounded-full text-xl">{darkMode ? '☀️' : '🌙'}</button>
         <button onClick={() => {localStorage.removeItem('mava_active_session'); window.location.href="/";}} className={`font-black text-[11px] uppercase px-6 py-3 rounded-full ${darkMode ? 'bg-zinc-800' : 'bg-white border border-zinc-200'}`}>Déconnexion 🚪</button>
       </div>
 
-      <h1 className="text-4xl font-black uppercase mb-8 italic border-b-8 border-[#700D02] inline-block">MAVA Board</h1>
+      <h1 className="text-4xl font-black uppercase mb-8 italic border-b-8 border-[#700D02] inline-block tracking-tighter">MAVA Board</h1>
 
       <div className="flex gap-4 mb-8 sticky top-0 bg-inherit z-10 py-2">
         {['pending', 'done'].map((tab) => (
@@ -102,11 +125,14 @@ function DashboardContent() {
             <div className={`absolute -top-4 right-8 text-[11px] font-black px-5 py-2 rounded-full border-2 border-white ${order.order_statuts === 'Livrée' ? 'bg-green-600' : 'bg-red-600'} text-white uppercase`}>
               {order.order_statuts === 'Livrée' ? 'Livrée' : 'À Livrer'}
             </div>
+            {/* RETOUR DES IDs DE COMMANDES (Point 3) */}
+            <div className="font-black text-2xl mb-6 opacity-20 italic">#ID-{order.order_number || '000'}</div>
+            
             <div className="space-y-4 mb-8">
-              <div className="flex flex-col"><span className="text-[10px] font-black uppercase opacity-40">Produit</span><span className="text-xl font-bold">{order.product}</span></div>
-              <div className="flex flex-col"><span className="text-[10px] font-black uppercase opacity-40">Quartier</span><span className="text-xl font-bold">{order.quartier}</span></div>
-              <div className="flex flex-col"><span className="text-[10px] font-black uppercase opacity-40">Contact Client</span><span className="text-xl font-bold">{order.telephone}</span></div>
-              <div className="pt-4 border-t border-zinc-800/50"><span className="text-[10px] font-black uppercase text-red-600">Prix Total</span><div className={`text-4xl font-black ${colors.price}`}>{order.prix?.toLocaleString()} FCFA</div></div>
+              <div className="flex flex-col"><span className="text-[10px] font-black uppercase opacity-40">Produit</span><span className="text-xl font-bold tracking-tight">{order.product}</span></div>
+              <div className="flex flex-col"><span className="text-[10px] font-black uppercase opacity-40">Quartier</span><span className="text-xl font-bold tracking-tight">{order.quartier}</span></div>
+              <div className="flex flex-col"><span className="text-[10px] font-black uppercase opacity-40">Contact Client</span><span className="text-xl font-bold tracking-tight">{order.telephone}</span></div>
+              <div className="pt-4 border-t border-zinc-800/50"><span className="text-[10px] font-black uppercase text-red-600">Prix Total</span><div className={`text-4xl font-black ${colors.price} tracking-tighter`}>{order.prix?.toLocaleString()} FCFA</div></div>
             </div>
             <div className="flex flex-col gap-3">
               {activeTab === 'pending' ? (

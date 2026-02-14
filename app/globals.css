@@ -2,24 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
-html {
-  overscroll-behavior-y: auto !important; /* Force le refresh natif */
+/* Configuration pour forcer le refresh PWA */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
   height: 100%;
+  background-color: black;
+  /* On autorise le comportement de rafraîchissement partout */
+  overscroll-behavior-y: auto !important;
+  -webkit-overflow-scrolling: touch;
 }
 
 body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  background-color: black;
+  /* Fix spécifique pour que la PWA comprenne qu'elle peut pull-to-refresh */
+  overflow-y: scroll; 
   -webkit-font-smoothing: antialiased;
-  touch-action: manipulation;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y; /* Permet le scroll multidirectionnel sans bloquer le système */
 }
 
 button:active, a:active {
   transform: scale(0.96);
+  transition: transform 0.1s ease;
 }
 
 ::-webkit-scrollbar {

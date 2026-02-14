@@ -1,9 +1,10 @@
 {
   "name": "MAVA Board",
-  "short_name": "MAVA Board",
-  "description": "Dashboard de livraison MAVA",
-  "start_url": "/",
+  "short_name": "MAVA",
+  "description": "Dashboard MAVA",
+  "start_url": "/?pwa=true",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#000000",
   "theme_color": "#700D02",
   "icons": [

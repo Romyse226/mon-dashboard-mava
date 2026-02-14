@@ -8,7 +8,6 @@ module.exports = {
     extend: {
       colors: {
         mavaRed: "#700D02",
-        mavaBrightRed: "#FF0000",
       },
     },
   },

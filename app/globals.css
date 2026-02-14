@@ -2,21 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Empêche le rebond moche mais garde le pull-to-refresh */
-html, body {
-  overscroll-behavior-y: contain; 
-  background-color: black;
+html {
+  /* Permet le rafraîchissement natif au glisser vers le bas */
+  overscroll-behavior-y: auto;
   height: 100%;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch; /* Force la fluidité iOS */
-}
-
-/* Style de la scrollbar pour rester dans le design sombre */
-::-webkit-scrollbar {
-  width: 0px;
 }
 
 body {
   margin: 0;
   padding: 0;
+  height: 100%;
+  /* Rendu ultra-fluide pour mobile */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Supprime le délai de clic sur mobile */
+  touch-action: manipulation;
+  overflow-x: hidden;
+}
+
+/* Animation de pression sur n'importe quel bouton */
+button:active, a:active {
+  transform: scale(0.96);
+  transition: transform 0.1s ease;
+}
+
+/* Cache la scrollbar mais garde le défilement */
+::-webkit-scrollbar {
+  display: none;
 }

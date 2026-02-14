@@ -1,3 +1,5 @@
+import "./globals.css"; // CETTE LIGNE EST CRUCIALE
+
 export const metadata = {
   title: "MAVA Board",
   description: "Dashboard de livraison MAVA",
@@ -5,11 +7,6 @@ export const metadata = {
   icons: {
     icon: "https://raw.githubusercontent.com/Romyse226/mon-dashboard-mava/31c25ca78b7d59f021c7a498e8b1ce7491f12237/mon%20logo%20mava.png",
     apple: "https://raw.githubusercontent.com/Romyse226/mon-dashboard-mava/31c25ca78b7d59f021c7a498e8b1ce7491f12237/mon%20logo%20mava.png",
-  },
-  appleWebApp: {
-    capable: true,
-    title: "MAVA Board",
-    statusBarStyle: "black-translucent",
   },
 };
 

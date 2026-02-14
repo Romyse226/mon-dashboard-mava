@@ -12,27 +12,20 @@ function DashboardContent() {
   const [vendeurPhone, setVendeurPhone] = useState(null);
   const [phoneInput, setPhoneInput] = useState("");
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [activeTab, setActiveTab] = useState('pending');
-  const [errorMsg, setErrorMsg] = useState("");
   const [showNotifModal, setShowNotifModal] = useState(false);
 
-  // Fonction de récupération ultra-rapide
   const fetchOrders = useCallback(async (phone) => {
     if (!phone) return;
-    setLoading(true);
     const { data } = await supabase.from('orders').select('*').eq('phone_vendeur', phone).order('created_at', { ascending: false });
     setOrders(data || []);
-    setLoading(false);
   }, []);
 
   useEffect(() => {
-    // Vérification Notifs (Web + PWA)
-    if ("Notification" in window) {
-      if (Notification.permission !== "granted") {
-        setShowNotifModal(true);
-      }
+    // Demande immédiate pour le WEB (Point 2)
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
     }
 
     const savedActive = localStorage.getItem('mava_active_session');
@@ -40,57 +33,32 @@ function DashboardContent() {
     const v = searchParams.get('v');
 
     if (lastNum) setPhoneInput(lastNum);
-
     if (v) {
       setVendeurPhone(v);
       fetchOrders(v);
       localStorage.setItem('mava_active_session', v);
-      localStorage.setItem('mava_last_number', v);
     } else if (savedActive) {
       setVendeurPhone(savedActive);
       fetchOrders(savedActive);
     }
   }, [searchParams, fetchOrders]);
 
-  // Realtime
-  useEffect(() => {
-    if (!vendeurPhone) return;
-    const channel = supabase.channel('orders-db').on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `phone_vendeur=eq.${vendeurPhone}` }, () => {
-      fetchOrders(vendeurPhone);
-    }).subscribe();
-    return () => supabase.removeChannel(channel);
-  }, [vendeurPhone, fetchOrders]);
-
   const handleLogin = async () => {
-    setErrorMsg("");
     let num = phoneInput.replace(/\s/g, "").replace("+", "");
     if (num.length === 10 && num.startsWith("0")) num = "225" + num;
     const { data } = await supabase.from('orders').select('phone_vendeur').eq('phone_vendeur', num).limit(1);
-    
     if (data && data.length > 0) {
       localStorage.setItem('mava_active_session', num);
       localStorage.setItem('mava_last_number', num);
-      window.location.replace(`?v=${num}`); // Utilise replace pour éviter les bugs d'historique PWA
+      window.location.href = `?v=${num}`;
     } else {
-      setErrorMsg("Numéro non reconnu.");
-      setTimeout(() => setErrorMsg(""), 4000);
+      alert("Numéro non reconnu.");
     }
   };
 
   const updateStatus = async (id, newStatus) => {
-    // Mise à jour locale immédiate pour la fluidité (Optimistic UI)
-    setOrders(prev => prev.map(o => o.id === id ? {...o, order_statuts: newStatus} : o));
     await supabase.from('orders').update({ order_statuts: newStatus }).eq('id', id);
     fetchOrders(vendeurPhone);
-  };
-
-  const requestPermission = () => {
-    Notification.requestPermission().then(permission => {
-      if (permission === "granted") {
-        setShowNotifModal(false);
-        new Notification("MAVA Board", { body: "Notifications activées !", icon: logoUrl });
-      }
-    });
   };
 
   const colors = {
@@ -104,61 +72,41 @@ function DashboardContent() {
   if (!vendeurPhone) {
     return (
       <div className={`min-h-screen ${colors.bg} flex flex-col items-center p-8`}>
-        <div className="w-full flex justify-end mb-4">
-          <button onClick={() => setDarkMode(!darkMode)} className="p-3 bg-zinc-800 rounded-full active:scale-90 transition-transform">
-            {darkMode ? '☀️' : '🌙'}
-          </button>
-        </div>
         <img src={logoUrl} className="w-40 mb-8" alt="Logo" />
-        {errorMsg && <div className="w-full max-w-sm bg-red-600 text-white p-4 rounded-xl font-bold mb-4 text-center animate-pulse">{errorMsg}</div>}
-        <input type="tel" className={`w-full max-w-sm p-5 rounded-2xl border-2 mb-4 outline-none text-xl text-center font-bold ${darkMode ? 'bg-zinc-900 text-white border-zinc-700' : 'bg-white text-black border-zinc-300'}`} placeholder="07XXXXXXXX" value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} />
-        <button onClick={handleLogin} className="w-full max-w-sm p-5 rounded-2xl font-black uppercase bg-[#700D02] text-white text-lg active:scale-95 transition-transform shadow-xl">Ouvrir mon Board</button>
+        <input type="tel" className={`w-full max-w-sm p-5 rounded-2xl border-2 mb-4 text-center font-bold ${darkMode ? 'bg-zinc-900 text-white border-zinc-700' : 'bg-white text-black border-zinc-300'}`} placeholder="07XXXXXXXX" value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} />
+        <button onClick={handleLogin} className="w-full max-w-sm p-5 rounded-2xl font-black uppercase bg-[#700D02] text-white">Ouvrir mon Board</button>
       </div>
     );
   }
 
-  const filteredOrders = orders.filter(o => activeTab === 'pending' ? o.order_statuts !== "Livrée" : o.order_statuts === "Livrée");
-
   return (
-    <div className={`min-h-screen ${colors.bg} ${colors.text} p-4 font-sans select-none`}>
-      {showNotifModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md">
-          <div className="bg-white text-black p-8 rounded-[2.5rem] w-full max-w-sm text-center border-4 border-[#700D02]">
-            <h3 className="text-2xl font-black uppercase mb-2">Activer les alertes</h3>
-            <p className="text-sm opacity-70 mb-6 font-medium">Autorisez les notifications pour recevoir vos commandes instantanément.</p>
-            <button onClick={requestPermission} className="w-full bg-[#700D02] text-white py-5 rounded-2xl font-black uppercase active:scale-95 transition-transform">Autoriser</button>
-            <button onClick={() => setShowNotifModal(false)} className="mt-4 text-xs font-bold uppercase opacity-40">Plus tard</button>
-          </div>
-        </div>
-      )}
-
-      <div className="flex justify-between items-center mb-8 pt-2">
-        <button onClick={() => setDarkMode(!darkMode)} className="p-3 bg-zinc-800 rounded-full active:scale-90 transition-transform text-xl">{darkMode ? '☀️' : '🌙'}</button>
-        <button onClick={() => {localStorage.removeItem('mava_active_session'); window.location.replace("/");}} className={`font-black text-[11px] uppercase px-6 py-3 rounded-full active:scale-90 transition-transform ${darkMode ? 'bg-zinc-800' : 'bg-white border border-zinc-200'}`}>Déconnexion 🚪</button>
+    <div className={`min-h-screen ${colors.bg} ${colors.text} p-4`}>
+      <div className="flex justify-between items-center mb-8">
+        <button onClick={() => setDarkMode(!darkMode)} className="p-3 bg-zinc-800 rounded-full text-xl">{darkMode ? '☀️' : '🌙'}</button>
+        <button onClick={() => {localStorage.removeItem('mava_active_session'); window.location.href="/";}} className={`font-black text-[11px] uppercase px-6 py-3 rounded-full ${darkMode ? 'bg-zinc-800' : 'bg-white border border-zinc-200'}`}>Déconnexion 🚪</button>
       </div>
 
-      <h1 className="text-4xl font-black uppercase mb-8 italic border-b-8 border-[#700D02] inline-block tracking-tighter">MAVA Board</h1>
+      <h1 className="text-4xl font-black uppercase mb-8 italic border-b-8 border-[#700D02] inline-block">MAVA Board</h1>
 
       <div className="flex gap-4 mb-8 sticky top-0 bg-inherit z-10 py-2">
         {['pending', 'done'].map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-4 text-xs font-black uppercase rounded-2xl transition-all active:scale-95 ${activeTab === tab ? 'bg-[#700D02] text-white shadow-lg' : 'opacity-30 bg-zinc-800/20'}`}>
-            {tab === 'pending' ? `🔔 En cours (${orders.filter(o => o.order_statuts !== "Livrée").length})` : `✅ Livrées (${orders.filter(o => o.order_statuts === "Livrée").length})`}
+            {tab === 'pending' ? `En cours (${orders.filter(o => o.order_statuts !== "Livrée").length})` : `Livrées (${orders.filter(o => o.order_statuts === "Livrée").length})`}
           </button>
         ))}
       </div>
 
       <div className="space-y-8 pb-12">
-        {filteredOrders.map(order => (
+        {orders.filter(o => activeTab === 'pending' ? o.order_statuts !== "Livrée" : o.order_statuts === "Livrée").map(order => (
           <div key={order.id} className={`${colors.card} ${colors.border} rounded-[2.5rem] p-8 relative shadow-2xl`}>
             <div className={`absolute -top-4 right-8 text-[11px] font-black px-5 py-2 rounded-full border-2 border-white ${order.order_statuts === 'Livrée' ? 'bg-green-600' : 'bg-red-600'} text-white uppercase`}>
               {order.order_statuts === 'Livrée' ? 'Livrée' : 'À Livrer'}
             </div>
-            <div className="font-black text-2xl mb-6 opacity-10 italic">#ID-{order.order_number || '000'}</div>
             <div className="space-y-4 mb-8">
-              <div className="flex flex-col"><span className="text-[10px] font-black uppercase opacity-40">Produit</span><span className="text-xl font-bold tracking-tight">{order.product}</span></div>
-              <div className="flex flex-col"><span className="text-[10px] font-black uppercase opacity-40">Quartier</span><span className="text-xl font-bold tracking-tight">{order.quartier}</span></div>
-              <div className="flex flex-col"><span className="text-[10px] font-black uppercase opacity-40">Contact Client</span><span className="text-xl font-bold tracking-tight">{order.telephone}</span></div>
-              <div className="pt-4 border-t border-zinc-800/50"><span className="text-[10px] font-black uppercase opacity-40 text-red-600">Prix Total</span><div className={`text-4xl font-black ${colors.price} tracking-tighter`}>{order.prix?.toLocaleString()} FCFA</div></div>
+              <div className="flex flex-col"><span className="text-[10px] font-black uppercase opacity-40">Produit</span><span className="text-xl font-bold">{order.product}</span></div>
+              <div className="flex flex-col"><span className="text-[10px] font-black uppercase opacity-40">Quartier</span><span className="text-xl font-bold">{order.quartier}</span></div>
+              <div className="flex flex-col"><span className="text-[10px] font-black uppercase opacity-40">Contact Client</span><span className="text-xl font-bold">{order.telephone}</span></div>
+              <div className="pt-4 border-t border-zinc-800/50"><span className="text-[10px] font-black uppercase text-red-600">Prix Total</span><div className={`text-4xl font-black ${colors.price}`}>{order.prix?.toLocaleString()} FCFA</div></div>
             </div>
             <div className="flex flex-col gap-3">
               {activeTab === 'pending' ? (
@@ -167,12 +115,11 @@ function DashboardContent() {
                   <a href={`https://wa.me/${order.phone_client?.replace(/\s/g, "")}`} target="_blank" rel="noreferrer" className="w-full bg-[#25D366] py-5 rounded-2xl font-black uppercase text-black text-center shadow-lg active:scale-95 transition-transform">WhatsApp du client 💬</a>
                 </>
               ) : (
-                <button onClick={() => updateStatus(order.id, 'À livrer')} className="w-full bg-[#700D02] py-4 rounded-2xl font-black uppercase text-white opacity-60 active:scale-95 active:opacity-100 transition-all">Annuler 🔄</button>
+                <button onClick={() => updateStatus(order.id, 'À livrer')} className="w-full bg-[#700D02] py-4 rounded-2xl font-black uppercase text-white opacity-60 active:scale-95 transition-all">Annuler 🔄</button>
               )}
             </div>
           </div>
         ))}
-        {filteredOrders.length === 0 && <div className="text-center opacity-30 font-bold py-10 uppercase tracking-widest text-sm">Aucune commande ici</div>}
       </div>
     </div>
   );

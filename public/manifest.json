@@ -1,6 +1,6 @@
 {
   "name": "MAVA Board",
-  "short_name": "MAVA",
+  "short_name": "MAVA Board",
   "description": "Dashboard de livraison MAVA",
   "start_url": "/",
   "display": "standalone",

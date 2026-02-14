@@ -2,10 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 0, 0, 0;
-  --background-end-rgb: 0, 0, 0;
+/* Force le pull-to-refresh en mode PWA sur Android et iOS */
+html, body {
+  overscroll-behavior-y: contain; /* Empêche le rebond moche mais autorise le refresh système */
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* Défilement fluide iOS */
 }
 
 body {
@@ -13,7 +15,7 @@ body {
   color: white;
 }
 
-/* Désactive le scroll rebondissant moche sur iOS mais garde le pull-to-refresh */
-html {
-  overscroll-behavior-y: contain;
+/* Optionnel : cacher la barre de scroll pour un look plus "App" */
+::-webkit-scrollbar {
+  display: none;
 }

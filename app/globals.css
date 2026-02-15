@@ -2,23 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Configuration pour forcer le refresh PWA */
 html, body {
   margin: 0;
   padding: 0;
   width: 100%;
   height: 100%;
   background-color: black;
-  /* On autorise le comportement de rafraîchissement partout */
+  /* Autorise le rebond sur iOS */
   overscroll-behavior-y: auto !important;
-  -webkit-overflow-scrolling: touch;
 }
 
 body {
-  /* Fix spécifique pour que la PWA comprenne qu'elle peut pull-to-refresh */
-  overflow-y: scroll; 
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch; /* Indispensable pour la fluidité iOS */
   -webkit-font-smoothing: antialiased;
-  touch-action: pan-x pan-y; /* Permet le scroll multidirectionnel sans bloquer le système */
+  touch-action: pan-x pan-y;
 }
 
 button:active, a:active {

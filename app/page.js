@@ -29,6 +29,24 @@ function DashboardContent() {
         setShowNotifModal(true);
       }
     }
+  // Fix Pull-to-refresh pour iOS PWA
+  useEffect(() => {
+    let touchStart = 0;
+    const handleTouchStart = (e) => { touchStart = e.touches[0].pageY; };
+    const handleTouchEnd = (e) => {
+      const touchEnd = e.changedTouches[0].pageY;
+      // Si on est en haut de page et qu'on tire vers le bas de plus de 150px
+      if (window.scrollY <= 10 && touchEnd - touchStart > 150) {
+        window.location.reload();
+      }
+    };
+    window.addEventListener('touchstart', handleTouchStart);
+    window.addEventListener('touchend', handleTouchEnd);
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, []);
 
     const savedActive = localStorage.getItem('mava_active_session');
     const lastNum = localStorage.getItem('mava_last_number');

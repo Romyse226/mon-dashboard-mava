@@ -115,8 +115,10 @@ function DashboardContent() {
       <div className={`min-h-screen ${colors.bg} flex flex-col items-center p-8`}>
         <div className="w-full flex justify-end mb-4"><button onClick={toggleDarkMode} className="p-3 bg-zinc-800 rounded-full">{darkMode ? '☀️' : '🌙'}</button></div>
         <img src={logoUrl} className="w-40 mb-8" alt="Logo" />
-        {/* 2. Texte d'accueil ajouté */}
-        <p className={`text-sm mb-2 font-bold uppercase tracking-widest ${darkMode ? 'text-zinc-500' : 'text-zinc-700'}`}>Entre ton numéro pour suivre et gérer tes ventes</p>
+        {/* Texte d'accueil corrigé : plus blanc, minuscule, centré et fin */}
+        <p className={`text-xs mb-6 font-medium leading-relaxed max-w-[250px] ${darkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>
+          Entre ton numéro pour suivre et gérer tes ventes
+        </p>
         <input type="tel" className={`w-full max-w-sm p-5 rounded-2xl border-2 mb-4 text-center font-bold ${darkMode ? 'bg-zinc-900 text-white border-zinc-700' : 'bg-white text-black border-zinc-300'}`} placeholder="07XXXXXXXX" value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} />
         <button onClick={handleLogin} className="w-full max-w-sm p-5 rounded-2xl font-black uppercase bg-[#700D02] text-white active:scale-95 transition-transform">Ouvrir mon Board</button>
       </div>

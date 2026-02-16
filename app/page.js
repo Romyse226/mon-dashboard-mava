@@ -23,7 +23,6 @@ function DashboardContent() {
     setOrders(data || []);
   }, []);
 
-  // Fix Pull-to-refresh avec Loader Visuel
   useEffect(() => {
     let touchStart = 0;
     const handleTouchStart = (e) => { touchStart = e.touches[0].pageY; };
@@ -43,13 +42,21 @@ function DashboardContent() {
   }, []);
 
   useEffect(() => {
-    // 1. Initialisation OneSignal
+    // 1. Initialisation OneSignal UNIQUE
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     window.OneSignalDeferred.push(async function(OneSignal) {
       await OneSignal.init({
         appId: "26385900-36bd-415f-bb08-3884696efc0a",
       });
-      // Lie l'appareil au numéro du vendeur pour les notifs ciblées de Supabase
+
+      // Gestion de la modal via OneSignal uniquement
+      const isPushSupported = OneSignal.Notifications.isPushSupported();
+      const permission = OneSignal.Notifications.permission;
+      
+      if (isPushSupported && !permission) {
+        setShowNotifModal(true);
+      }
+
       if (vendeurPhone) {
         OneSignal.login(vendeurPhone);
       }
@@ -57,14 +64,7 @@ function DashboardContent() {
 
     // 2. Persistance du mode sombre
     const savedMode = localStorage.getItem('mava_dark_mode');
-    if (savedMode !== null) {
-      setDarkMode(savedMode === 'true');
-    }
-
-    // Affiche la modal si les permissions ne sont pas encore accordées
-    if ("Notification" in window && Notification.permission === "default") {
-      setShowNotifModal(true);
-    }
+    if (savedMode !== null) setDarkMode(savedMode === 'true');
 
     const savedActive = localStorage.getItem('mava_active_session');
     const lastNum = localStorage.getItem('mava_last_number');
@@ -105,10 +105,10 @@ function DashboardContent() {
     fetchOrders(vendeurPhone);
   };
 
-  // Permission via OneSignal (Point crucial pour PWA)
+  // Correction de la permission OneSignal
   const requestPermission = () => {
-    window.OneSignalDeferred.push(function(OneSignal) {
-      OneSignal.Notifications.requestPermission();
+    window.OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.Notifications.requestPermission();
       setShowNotifModal(false);
     });
   };
@@ -127,7 +127,7 @@ function DashboardContent() {
       <div className={`min-h-screen ${colors.bg} flex flex-col items-center p-8`}>
         <div className="w-full flex justify-end mb-4"><button onClick={toggleDarkMode} className="p-3 bg-zinc-800 rounded-full">{darkMode ? '☀️' : '🌙'}</button></div>
         <img src={logoUrl} className="w-40 mb-8" alt="Logo" />
-        <p className={`text-xs mb-6 font-medium leading-relaxed ${darkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>
+        <p className={`text-xs mb-6 font-medium leading-relaxed text-center ${darkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>
           Entre ton numéro pour suivre et gérer tes ventes
         </p>
         <input type="tel" className={`w-full max-w-sm p-5 rounded-2xl border-2 mb-4 text-center font-bold ${darkMode ? 'bg-zinc-900 text-white border-zinc-700' : 'bg-white text-black border-zinc-300'}`} placeholder="07XXXXXXXX" value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} />

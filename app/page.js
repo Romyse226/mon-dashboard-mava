@@ -23,45 +23,30 @@ function DashboardContent() {
     setOrders(data || []);
   }, []);
 
-  useEffect(() => {
-    let touchStart = 0;
-    const handleTouchStart = (e) => { touchStart = e.touches[0].pageY; };
-    const handleTouchEnd = (e) => {
-      const touchEnd = e.changedTouches[0].pageY;
-      if (window.scrollY <= 10 && touchEnd - touchStart > 150) {
-        setIsRefreshing(true);
-        setTimeout(() => window.location.reload(), 800);
-      }
-    };
-    window.addEventListener('touchstart', handleTouchStart);
-    window.addEventListener('touchend', handleTouchEnd);
-    return () => {
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, []);
-
-  useEffect(() => {
-    // 1. Initialisation OneSignal UNIQUE
+useEffect(() => {
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     window.OneSignalDeferred.push(async function(OneSignal) {
       await OneSignal.init({
         appId: "26385900-36bd-415f-bb08-3884696efc0a",
+        allowLocalhostAsSecureOrigin: true, // Pour les tests
       });
 
-      // Gestion de la modal via OneSignal uniquement
-      const isPushSupported = OneSignal.Notifications.isPushSupported();
-      const permission = OneSignal.Notifications.permission;
+      // Vérification de l'état réel
+      const permission = await OneSignal.Notifications.permission;
+      const isSupported = OneSignal.Notifications.isPushSupported();
       
-      if (isPushSupported && !permission) {
+      console.log("Push supporté:", isSupported, "Permission actuelle:", permission);
+
+      // Si pas encore autorisé, on montre la modal
+      if (permission !== true) {
         setShowNotifModal(true);
       }
 
       if (vendeurPhone) {
-        OneSignal.login(vendeurPhone);
+        console.log("Tentative de login OneSignal pour:", vendeurPhone);
+        await OneSignal.login(vendeurPhone.toString());
       }
     });
-
     // 2. Persistance du mode sombre
     const savedMode = localStorage.getItem('mava_dark_mode');
     if (savedMode !== null) setDarkMode(savedMode === 'true');

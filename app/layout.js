@@ -13,7 +13,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="fr">
-      <body className="antialiased">{children}</body>
+      <head>
+        <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+      </head>
+      <body>{children}</body>
     </html>
   );
 }

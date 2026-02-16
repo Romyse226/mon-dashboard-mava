@@ -43,12 +43,25 @@ function DashboardContent() {
   }, []);
 
   useEffect(() => {
-    // 1. Persistance du mode sombre
+    // 1. Initialisation OneSignal
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    window.OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
+        appId: "26385900-36bd-415f-bb08-3884696efc0a",
+      });
+      // Lie l'appareil au numéro du vendeur pour les notifs ciblées de Supabase
+      if (vendeurPhone) {
+        OneSignal.login(vendeurPhone);
+      }
+    });
+
+    // 2. Persistance du mode sombre
     const savedMode = localStorage.getItem('mava_dark_mode');
     if (savedMode !== null) {
       setDarkMode(savedMode === 'true');
     }
 
+    // Affiche la modal si les permissions ne sont pas encore accordées
     if ("Notification" in window && Notification.permission === "default") {
       setShowNotifModal(true);
     }
@@ -66,7 +79,7 @@ function DashboardContent() {
       setVendeurPhone(savedActive);
       fetchOrders(savedActive);
     }
-  }, [searchParams, fetchOrders]);
+  }, [vendeurPhone, searchParams, fetchOrders]);
 
   const toggleDarkMode = () => {
     const newMode = !darkMode;
@@ -92,12 +105,11 @@ function DashboardContent() {
     fetchOrders(vendeurPhone);
   };
 
+  // Permission via OneSignal (Point crucial pour PWA)
   const requestPermission = () => {
-    Notification.requestPermission().then(permission => {
-      if (permission === "granted") {
-        setShowNotifModal(false);
-        new Notification("MAVA Board", { body: "Alertes activées !", icon: logoUrl });
-      }
+    window.OneSignalDeferred.push(function(OneSignal) {
+      OneSignal.Notifications.requestPermission();
+      setShowNotifModal(false);
     });
   };
 
@@ -106,8 +118,8 @@ function DashboardContent() {
     card: darkMode ? 'bg-[#121212]' : 'bg-white',
     text: darkMode ? 'text-white' : 'text-black',
     border: darkMode ? 'border-white border-[3px]' : 'border-black border-[3px]',
-    price: darkMode ? 'text-[#FF0000]' : 'text-[#FF0000]', // Rouge vif partout
-    label: darkMode ? 'opacity-40' : 'text-gray-700 font-extrabold', // Gris plus sombre en mode clair
+    price: darkMode ? 'text-[#FF0000]' : 'text-[#FF0000]', 
+    label: darkMode ? 'opacity-40' : 'text-gray-700 font-extrabold',
   };
 
   if (!vendeurPhone) {
@@ -115,7 +127,6 @@ function DashboardContent() {
       <div className={`min-h-screen ${colors.bg} flex flex-col items-center p-8`}>
         <div className="w-full flex justify-end mb-4"><button onClick={toggleDarkMode} className="p-3 bg-zinc-800 rounded-full">{darkMode ? '☀️' : '🌙'}</button></div>
         <img src={logoUrl} className="w-40 mb-8" alt="Logo" />
-        {/* Texte d'accueil corrigé : plus blanc, minuscule, centré et fin */}
         <p className={`text-xs mb-6 font-medium leading-relaxed ${darkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>
           Entre ton numéro pour suivre et gérer tes ventes
         </p>
@@ -127,7 +138,6 @@ function DashboardContent() {
 
   return (
     <div className={`min-h-screen ${colors.bg} ${colors.text} p-4`}>
-      {/* Loader de refresh */}
       {isRefreshing && (
         <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[200] bg-[#700D02] p-3 rounded-full shadow-lg animate-bounce">
           <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -149,7 +159,6 @@ function DashboardContent() {
         <button onClick={() => {localStorage.removeItem('mava_active_session'); window.location.href="/";}} className={`font-black text-[11px] uppercase px-6 py-3 rounded-full active:scale-90 transition-transform ${darkMode ? 'bg-zinc-800' : 'bg-white border border-zinc-200'}`}>Déconnexion 🚪</button>
       </div>
 
-      {/* 4. Section HERO Créative */}
       <div className="mb-10">
         <h1 className="text-4xl font-black uppercase italic tracking-tighter leading-none mb-2">MAVA DASHBOARD</h1>
         <div className="flex items-center gap-2">
@@ -158,7 +167,7 @@ function DashboardContent() {
         </div>
       </div>
 
-<div className="flex gap-4 mb-8 sticky top-0 bg-inherit z-10 py-2">
+      <div className="flex gap-4 mb-8 sticky top-0 bg-inherit z-10 py-2">
         {['pending', 'done'].map((tab) => (
           <button 
             key={tab} 

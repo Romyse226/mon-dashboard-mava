@@ -170,13 +170,13 @@ function DashboardContent() {
             <div className={`absolute -top-4 right-8 text-[11px] font-black px-5 py-2 rounded-full border-2 border-white ${order.order_statuts === 'Livrée' ? 'bg-green-600' : 'bg-red-600'} text-white uppercase`}>
               {order.order_statuts === 'Livrée' ? 'Livrée' : 'À Livrer'}
             </div>
-            <div className="font-black text-2xl mb-6 opacity-20 italic">N°-{order.order_number || '000'}</div>
+            <div className="font-black text-2xl mb-6 opacity-30 italic">N°-{order.order_number || '000'}</div>
             
             <div className="space-y-4 mb-8">
               <div className="flex flex-col"><span className={`text-[10px] uppercase ${colors.label}`}>Produit</span><span className="text-xl font-bold tracking-tight">{order.articles}</span></div>
               <div className="flex flex-col"><span className={`text-[10px] uppercase ${colors.label}`}>Quartier</span><span className="text-xl font-bold tracking-tight">{order.quartier}</span></div>
               <div className="flex flex-col"><span className={`text-[10px] uppercase ${colors.label}`}>Contact Client</span><span className="text-xl font-bold tracking-tight">{order.telephone}</span></div>
-              <div className="pt-4 border-t border-zinc-800/20"><span className="text-[10px] font-black uppercase text-red-600">Prix Total</span><div className={`text-4xl font-black ${colors.price} tracking-tighter`}>{order.prix?.toLocaleString()} FCFA</div></div>
+              <div className="pt-4 border-t border-zinc-800/20"><span className="text-[10px] font-black uppercase text-red-600">Prix</span><div className={`text-4xl font-black ${colors.price} tracking-tighter`}>{order.prix?.toLocaleString()} FCFA</div></div>
             </div>
             <div className="flex flex-col gap-3">
               {activeTab === 'pending' ? (

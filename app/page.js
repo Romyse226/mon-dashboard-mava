@@ -23,7 +23,6 @@ function DashboardContent() {
     setOrders(data || []);
   }, []);
 
-  // Gestion du Pull-to-refresh
   useEffect(() => {
     let touchStart = 0;
     const handleTouchStart = (e) => { touchStart = e.touches[0].pageY; };
@@ -42,7 +41,6 @@ function DashboardContent() {
     };
   }, []);
 
-  // NOUVEAU BLOC ONESIGNAL INTÉGRÉ
   useEffect(() => {
     const initOneSignal = async () => {
       window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -54,10 +52,7 @@ function DashboardContent() {
           });
         }
 
-        // On vérifie l'état de notification immédiatement
         const isOptedIn = OneSignal.Notifications.permission;
-        
-        // Si l'utilisateur est déjà abonné, on cache la modal direct
         if (isOptedIn) {
           setShowNotifModal(false);
         } else {
@@ -74,7 +69,6 @@ function DashboardContent() {
 
     const timer = setTimeout(initOneSignal, 1000);
 
-    // Initialisation Data & DarkMode
     const savedMode = localStorage.getItem('mava_dark_mode');
     if (savedMode !== null) setDarkMode(savedMode === 'true');
 
@@ -167,7 +161,37 @@ function DashboardContent() {
 
       <div className="flex justify-between items-center mb-6">
         <button onClick={toggleDarkMode} className="p-3 bg-zinc-800 rounded-full text-xl active:scale-90 transition-transform">{darkMode ? '☀️' : '🌙'}</button>
-        <button onClick={() => {localStorage.removeItem('mava_active_session'); window.location.href="/";}} className={`font-black text-[11px] uppercase px-6 py-3 rounded-full active:scale-90 transition-transform ${darkMode ? 'bg-zinc-800' : 'bg-white border border-zinc-200'}`}>Déconnexion 🚪</button>
+        
+        <div className="flex flex-col items-end gap-2">
+          {/* BOUTON TEST INSERTION ICI */}
+          <button 
+            onClick={async () => {
+              const cleanPhone = vendeurPhone.toString().replace(/\s/g, "");
+              const withPrefix = cleanPhone.startsWith('225') ? cleanPhone : `225${cleanPhone}`;
+              
+              await fetch("https://onesignal.com/api/v1/notifications", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json; charset=utf-8",
+                  "Authorization": "Basic os_v2_app_ey4fsabwxvav7oyihccgs3x4bld6xn3q6yresj5pdavj3uqifpjwwo5hzvsh3zqpcnzmigdcagl3nijb63bjjkiwhf3gyh2kypkqxii"
+                },
+                body: JSON.stringify({
+                  app_id: "26385900-36bd-415f-bb08-3884696efc0a",
+                  include_external_user_ids: [withPrefix],
+                  contents: { "fr": "Test de sonnerie réussi ! 🔔" },
+                  headings: { "fr": "MAVA BOARD" },
+                  priority: 10
+                })
+              });
+              alert("Signal de test envoyé à OneSignal pour : " + withPrefix);
+            }}
+            className="bg-blue-600 text-white px-4 py-2 rounded-full font-black text-[10px] uppercase active:scale-90 transition-transform"
+          >
+            🚨 TESTER LA SONNERIE
+          </button>
+          
+          <button onClick={() => {localStorage.removeItem('mava_active_session'); window.location.href="/";}} className={`font-black text-[11px] uppercase px-6 py-3 rounded-full active:scale-90 transition-transform ${darkMode ? 'bg-zinc-800' : 'bg-white border border-zinc-200'}`}>Déconnexion 🚪</button>
+        </div>
       </div>
 
       <div className="mb-10">

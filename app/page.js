@@ -23,44 +23,58 @@ function DashboardContent() {
     setOrders(data || []);
   }, []);
 
+  // Gestion du Pull-to-refresh (Loader inclus)
   useEffect(() => {
-    // 1. OneSignal Logic
+    let touchStart = 0;
+    const handleTouchStart = (e) => { touchStart = e.touches[0].pageY; };
+    const handleTouchEnd = (e) => {
+      const touchEnd = e.changedTouches[0].pageY;
+      if (window.scrollY <= 10 && touchEnd - touchStart > 150) {
+        setIsRefreshing(true);
+        setTimeout(() => window.location.reload(), 800);
+      }
+    };
+    window.addEventListener('touchstart', handleTouchStart);
+    window.addEventListener('touchend', handleTouchEnd);
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, []);
+
+  useEffect(() => {
+    // 1. OneSignal Logic Stabilisée
     window.OneSignalDeferred = window.OneSignalDeferred || [];
-    
     window.OneSignalDeferred.push(async function(OneSignal) {
       if (!OneSignal.initialized) {
-        try {
-          await OneSignal.init({
-            appId: "26385900-36bd-415f-bb08-3884696efc0a",
-          });
-        } catch (e) {
-          console.error("Erreur init OneSignal:", e);
-        }
+        await OneSignal.init({
+          appId: "26385900-36bd-415f-bb08-3884696efc0a",
+        });
       }
 
-     if (vendeurPhone) {
-        // On nettoie le numéro (enlève les espaces)
+      // Login seulement si vendeurPhone est prêt
+      if (vendeurPhone) {
         const cleanPhone = vendeurPhone.toString().replace(/\s/g, "");
-        // On crée la version avec 225 si elle n'y est pas
         const withPrefix = cleanPhone.startsWith('225') ? cleanPhone : `225${cleanPhone}`;
-        // On crée la version sans 225
-        const withoutPrefix = cleanPhone.startsWith('225') ? cleanPhone.substring(3) : cleanPhone;
-
-        // On connecte l'utilisateur avec la version AVEC préfixe (standard Supabase)
-        OneSignal.login(withPrefix);
-        
-        // On ajoute un tag pour la version sans préfixe au cas où
-        OneSignal.User.addTag("phone_raw", withoutPrefix);
-        console.log("OneSignal synchronisé pour:", withPrefix);
+        // On attend que OneSignal soit prêt pour le login
+        try {
+            await OneSignal.login(withPrefix);
+            console.log("OneSignal synchronisé:", withPrefix);
+        } catch(e) { console.error("Login Error", e); }
       }
 
+      // Gestion intelligente de la modal
       const permission = OneSignal.Notifications.permission;
-      if (!permission) {
-        setShowNotifModal(true);
+      if (permission === false || permission === null || permission === undefined) {
+         // N'affiche la modal que si on n'a pas encore demandé ou si c'est "default"
+         // Sur OneSignal, 'granted' est true, le reste est false ou null
+         setShowNotifModal(true);
+      } else {
+         setShowNotifModal(false);
       }
     });
 
-    // 2. Persistance et Initialisation
+    // 2. Initialisation Data
     const savedMode = localStorage.getItem('mava_dark_mode');
     if (savedMode !== null) setDarkMode(savedMode === 'true');
 
@@ -69,7 +83,6 @@ function DashboardContent() {
     const v = searchParams.get('v');
 
     if (lastNum) setPhoneInput(lastNum);
-    
     if (v) {
       setVendeurPhone(v);
       fetchOrders(v);
@@ -123,13 +136,9 @@ function DashboardContent() {
   if (!vendeurPhone) {
     return (
       <div className={`min-h-screen ${colors.bg} flex flex-col items-center p-8`}>
-        <div className="w-full flex justify-end mb-4">
-          <button onClick={toggleDarkMode} className="p-3 bg-zinc-800 rounded-full">{darkMode ? '☀️' : '🌙'}</button>
-        </div>
+        <div className="w-full flex justify-end mb-4"><button onClick={toggleDarkMode} className="p-3 bg-zinc-800 rounded-full">{darkMode ? '☀️' : '🌙'}</button></div>
         <img src={logoUrl} className="w-40 mb-8" alt="Logo" />
-        <p className={`text-xs mb-6 font-medium leading-relaxed text-center ${darkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>
-          Entre ton numéro pour suivre et gérer tes ventes
-        </p>
+        <p className={`text-xs mb-6 font-medium leading-relaxed text-center ${darkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>Entre ton numéro pour suivre et gérer tes ventes</p>
         <input type="tel" className={`w-full max-w-sm p-5 rounded-2xl border-2 mb-4 text-center font-bold ${darkMode ? 'bg-zinc-900 text-white border-zinc-700' : 'bg-white text-black border-zinc-300'}`} placeholder="07XXXXXXXX" value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} />
         <button onClick={handleLogin} className="w-full max-w-sm p-5 rounded-2xl font-black uppercase bg-[#700D02] text-white active:scale-95 transition-transform">Ouvrir mon Board</button>
       </div>
@@ -138,6 +147,7 @@ function DashboardContent() {
 
   return (
     <div className={`min-h-screen ${colors.bg} ${colors.text} p-4`}>
+      {/* LOADER PULL TO REFRESH */}
       {isRefreshing && (
         <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[200] bg-[#700D02] p-3 rounded-full shadow-lg animate-bounce">
           <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>

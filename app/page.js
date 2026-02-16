@@ -38,8 +38,20 @@ function DashboardContent() {
         }
       }
 
-      if (vendeurPhone) {
-        OneSignal.login(vendeurPhone.toString());
+     if (vendeurPhone) {
+        // On nettoie le numéro (enlève les espaces)
+        const cleanPhone = vendeurPhone.toString().replace(/\s/g, "");
+        // On crée la version avec 225 si elle n'y est pas
+        const withPrefix = cleanPhone.startsWith('225') ? cleanPhone : `225${cleanPhone}`;
+        // On crée la version sans 225
+        const withoutPrefix = cleanPhone.startsWith('225') ? cleanPhone.substring(3) : cleanPhone;
+
+        // On connecte l'utilisateur avec la version AVEC préfixe (standard Supabase)
+        OneSignal.login(withPrefix);
+        
+        // On ajoute un tag pour la version sans préfixe au cas où
+        OneSignal.User.addTag("phone_raw", withoutPrefix);
+        console.log("OneSignal synchronisé pour:", withPrefix);
       }
 
       const permission = OneSignal.Notifications.permission;

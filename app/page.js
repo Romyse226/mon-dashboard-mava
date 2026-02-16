@@ -22,20 +22,12 @@ function DashboardContent() {
     setOrders(data || []);
   }, []);
 
-  useEffect(() => {
-    // FIX POINT 2 : Déclenchement notifs Web + PWA
-    if ("Notification" in window) {
-      if (Notification.permission === "default") {
-        setShowNotifModal(true);
-      }
-    }
-  // Fix Pull-to-refresh pour iOS PWA
+  // Fix Pull-to-refresh pour iOS PWA (Séparé correctement)
   useEffect(() => {
     let touchStart = 0;
     const handleTouchStart = (e) => { touchStart = e.touches[0].pageY; };
     const handleTouchEnd = (e) => {
       const touchEnd = e.changedTouches[0].pageY;
-      // Si on est en haut de page et qu'on tire vers le bas de plus de 150px
       if (window.scrollY <= 10 && touchEnd - touchStart > 150) {
         window.location.reload();
       }
@@ -47,6 +39,14 @@ function DashboardContent() {
       window.removeEventListener('touchend', handleTouchEnd);
     };
   }, []);
+
+  useEffect(() => {
+    // Déclenchement notifs Web + PWA
+    if ("Notification" in window) {
+      if (Notification.permission === "default") {
+        setShowNotifModal(true);
+      }
+    }
 
     const savedActive = localStorage.getItem('mava_active_session');
     const lastNum = localStorage.getItem('mava_last_number');
@@ -111,7 +111,6 @@ function DashboardContent() {
 
   return (
     <div className={`min-h-screen ${colors.bg} ${colors.text} p-4`}>
-      {/* Modal pour forcer les notifs si pas activées */}
       {showNotifModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md">
           <div className="bg-white text-black p-8 rounded-[2.5rem] w-full max-w-sm text-center border-4 border-[#700D02]">
@@ -143,8 +142,7 @@ function DashboardContent() {
             <div className={`absolute -top-4 right-8 text-[11px] font-black px-5 py-2 rounded-full border-2 border-white ${order.order_statuts === 'Livrée' ? 'bg-green-600' : 'bg-red-600'} text-white uppercase`}>
               {order.order_statuts === 'Livrée' ? 'Livrée' : 'À Livrer'}
             </div>
-            {/* RETOUR DES IDs DE COMMANDES (Point 3) */}
-            <div className="font-black text-2xl mb-6 opacity-20 italic">#ID-{order.order_number || '000'}</div>
+            <div className="font-black text-2xl mb-6 opacity-20 italic">N°-{order.order_number || '000'}</div>
             
             <div className="space-y-4 mb-8">
               <div className="flex flex-col"><span className="text-[10px] font-black uppercase opacity-40">Produit</span><span className="text-xl font-bold tracking-tight">{order.product}</span></div>

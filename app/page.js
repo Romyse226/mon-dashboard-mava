@@ -158,9 +158,17 @@ function DashboardContent() {
         </div>
       </div>
 
-      <div className="flex gap-4 mb-8 sticky top-0 bg-inherit z-10 py-2">
+<div className="flex gap-4 mb-8 sticky top-0 bg-inherit z-10 py-2">
         {['pending', 'done'].map((tab) => (
-          <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-4 text-[10px] font-black uppercase rounded-2xl transition-all active:scale-95 ${activeTab === tab ? 'bg-[#700D02] text-white shadow-lg shadow-[#700D02]/20' : 'opacity-30 bg-zinc-800/20'}`}>
+          <button 
+            key={tab} 
+            onClick={() => setActiveTab(tab)} 
+            className={`flex-1 py-4 text-[10px] font-black uppercase rounded-2xl transition-all active:scale-95 
+              ${activeTab === tab 
+                ? (tab === 'done' ? 'bg-green-600 text-white shadow-lg shadow-green-600/20' : 'bg-[#700D02] text-white shadow-lg shadow-[#700D02]/20') 
+                : 'opacity-30 bg-zinc-800/20'
+              }`}
+          >
             {tab === 'pending' ? `En cours (${orders.filter(o => o.order_statuts !== "Livrée").length})` : `Livrées (${orders.filter(o => o.order_statuts === "Livrée").length})`}
           </button>
         ))}

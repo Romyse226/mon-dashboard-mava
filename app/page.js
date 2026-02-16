@@ -23,31 +23,32 @@ function DashboardContent() {
     setOrders(data || []);
   }, []);
 
-useEffect(() => {
+  useEffect(() => {
+    // 1. OneSignal Logic
     window.OneSignalDeferred = window.OneSignalDeferred || [];
+    
     window.OneSignalDeferred.push(async function(OneSignal) {
-      await OneSignal.init({
-        appId: "26385900-36bd-415f-bb08-3884696efc0a",
-        allowLocalhostAsSecureOrigin: true, // Pour les tests
-      });
-
-      // Vérification de l'état réel
-      const permission = await OneSignal.Notifications.permission;
-      const isSupported = OneSignal.Notifications.isPushSupported();
-      
-      console.log("Push supporté:", isSupported, "Permission actuelle:", permission);
-
-      // Si pas encore autorisé, on montre la modal
-      if (permission !== true) {
-        setShowNotifModal(true);
+      if (!OneSignal.initialized) {
+        try {
+          await OneSignal.init({
+            appId: "26385900-36bd-415f-bb08-3884696efc0a",
+          });
+        } catch (e) {
+          console.error("Erreur init OneSignal:", e);
+        }
       }
 
       if (vendeurPhone) {
-        console.log("Tentative de login OneSignal pour:", vendeurPhone);
-        await OneSignal.login(vendeurPhone.toString());
+        OneSignal.login(vendeurPhone.toString());
+      }
+
+      const permission = OneSignal.Notifications.permission;
+      if (!permission) {
+        setShowNotifModal(true);
       }
     });
-    // 2. Persistance du mode sombre
+
+    // 2. Persistance et Initialisation
     const savedMode = localStorage.getItem('mava_dark_mode');
     if (savedMode !== null) setDarkMode(savedMode === 'true');
 
@@ -56,6 +57,7 @@ useEffect(() => {
     const v = searchParams.get('v');
 
     if (lastNum) setPhoneInput(lastNum);
+    
     if (v) {
       setVendeurPhone(v);
       fetchOrders(v);
@@ -90,7 +92,6 @@ useEffect(() => {
     fetchOrders(vendeurPhone);
   };
 
-  // Correction de la permission OneSignal
   const requestPermission = () => {
     window.OneSignalDeferred.push(async function(OneSignal) {
       await OneSignal.Notifications.requestPermission();
@@ -110,7 +111,9 @@ useEffect(() => {
   if (!vendeurPhone) {
     return (
       <div className={`min-h-screen ${colors.bg} flex flex-col items-center p-8`}>
-        <div className="w-full flex justify-end mb-4"><button onClick={toggleDarkMode} className="p-3 bg-zinc-800 rounded-full">{darkMode ? '☀️' : '🌙'}</button></div>
+        <div className="w-full flex justify-end mb-4">
+          <button onClick={toggleDarkMode} className="p-3 bg-zinc-800 rounded-full">{darkMode ? '☀️' : '🌙'}</button>
+        </div>
         <img src={logoUrl} className="w-40 mb-8" alt="Logo" />
         <p className={`text-xs mb-6 font-medium leading-relaxed text-center ${darkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>
           Entre ton numéro pour suivre et gérer tes ventes
@@ -199,4 +202,10 @@ useEffect(() => {
   );
 }
 
-export default function MavaDashboard() { return (<Suspense fallback={null}><DashboardContent /></Suspense>); }
+export default function MavaDashboard() { 
+  return (
+    <Suspense fallback={null}>
+      <DashboardContent />
+    </Suspense>
+  ); 
+}

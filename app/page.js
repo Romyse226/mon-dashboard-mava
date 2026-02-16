@@ -23,6 +23,7 @@ function DashboardContent() {
     setOrders(data || []);
   }, []);
 
+  // Gestion du Pull-to-refresh
   useEffect(() => {
     let touchStart = 0;
     const handleTouchStart = (e) => { touchStart = e.touches[0].pageY; };
@@ -41,6 +42,7 @@ function DashboardContent() {
     };
   }, []);
 
+  // NOUVEAU BLOC ONESIGNAL INTÉGRÉ
   useEffect(() => {
     const initOneSignal = async () => {
       window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -48,27 +50,31 @@ function DashboardContent() {
         if (!OneSignal.initialized) {
           await OneSignal.init({
             appId: "26385900-36bd-415f-bb08-3884696efc0a",
-            serviceWorkerParam: { scope: "/" },
-            serviceWorkerPath: "OneSignalSDKWorker.js",
+            allowLocalhostAsSecureOrigin: true,
           });
+        }
+
+        // On vérifie l'état de notification immédiatement
+        const isOptedIn = OneSignal.Notifications.permission;
+        
+        // Si l'utilisateur est déjà abonné, on cache la modal direct
+        if (isOptedIn) {
+          setShowNotifModal(false);
+        } else {
+          setShowNotifModal(true);
         }
 
         if (vendeurPhone) {
           const cleanPhone = vendeurPhone.toString().replace(/\s/g, "");
           const withPrefix = cleanPhone.startsWith('225') ? cleanPhone : `225${cleanPhone}`;
-          try {
-              await OneSignal.login(withPrefix);
-          } catch(e) { console.error("Login Error", e); }
+          await OneSignal.login(withPrefix);
         }
-
-        const permission = OneSignal.Notifications.permission;
-        setShowNotifModal(!permission);
       });
     };
 
     const timer = setTimeout(initOneSignal, 1000);
 
-    // Initialisation Data & DarkMode (Replacés à l'intérieur de l'effet)
+    // Initialisation Data & DarkMode
     const savedMode = localStorage.getItem('mava_dark_mode');
     if (savedMode !== null) setDarkMode(savedMode === 'true');
 
@@ -125,30 +131,18 @@ function DashboardContent() {
     card: darkMode ? 'bg-[#121212]' : 'bg-white',
     text: darkMode ? 'text-white' : 'text-black',
     border: darkMode ? 'border-white border-[3px]' : 'border-black border-[3px]',
-    price: darkMode ? 'text-[#FF0000]' : 'text-[#FF0000]', 
+    price: 'text-[#FF0000]', 
     label: darkMode ? 'opacity-40' : 'text-gray-700 font-extrabold',
   };
 
   if (!vendeurPhone) {
     return (
       <div className={`min-h-screen ${colors.bg} flex flex-col items-center p-8`}>
-        <div className="w-full flex justify-end mb-4">
-          <button onClick={toggleDarkMode} className="p-3 bg-zinc-800 rounded-full">{darkMode ? '☀️' : '🌙'}</button>
-        </div>
+        <div className="w-full flex justify-end mb-4"><button onClick={toggleDarkMode} className="p-3 bg-zinc-800 rounded-full">{darkMode ? '☀️' : '🌙'}</button></div>
         <img src={logoUrl} className="w-40 mb-8" alt="Logo" />
-        <p className={`text-xs mb-6 font-medium leading-relaxed text-center ${darkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>
-          Entre ton numéro pour suivre et gérer tes ventes
-        </p>
-        <input 
-          type="tel" 
-          className={`w-full max-w-sm p-5 rounded-2xl border-2 mb-4 text-center font-bold ${darkMode ? 'bg-zinc-900 text-white border-zinc-700' : 'bg-white text-black border-zinc-300'}`} 
-          placeholder="07XXXXXXXX" 
-          value={phoneInput} 
-          onChange={(e) => setPhoneInput(e.target.value)} 
-        />
-        <button onClick={handleLogin} className="w-full max-w-sm p-5 rounded-2xl font-black uppercase bg-[#700D02] text-white active:scale-95 transition-transform">
-          Ouvrir mon Board
-        </button>
+        <p className={`text-xs mb-6 font-medium leading-relaxed text-center ${darkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>Entre ton numéro pour suivre et gérer tes ventes</p>
+        <input type="tel" className={`w-full max-w-sm p-5 rounded-2xl border-2 mb-4 text-center font-bold ${darkMode ? 'bg-zinc-900 text-white border-zinc-700' : 'bg-white text-black border-zinc-300'}`} placeholder="07XXXXXXXX" value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} />
+        <button onClick={handleLogin} className="w-full max-w-sm p-5 rounded-2xl font-black uppercase bg-[#700D02] text-white active:scale-95 transition-transform">Ouvrir mon Board</button>
       </div>
     );
   }

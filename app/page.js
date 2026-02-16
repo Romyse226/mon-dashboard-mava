@@ -154,7 +154,7 @@ function DashboardContent() {
         <h1 className="text-4xl font-black uppercase italic tracking-tighter leading-none mb-2">MAVA DASHBOARD</h1>
         <div className="flex items-center gap-2">
           <div className="h-1 w-12 bg-[#700D02]"></div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-60">Mes Commandes Validées</p>
+          <p className="text-[15px] font-bold uppercase tracking-[0.2em] opacity-60">Mes Commandes Validées</p>
         </div>
       </div>
 
